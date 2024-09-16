@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Permissions {
+  create_reaction_roles
+  delete_reaction_roles
+  modify_reaction_roles
+  send_announcements
+  create_administrators
+  remove_administrators
+  full_permissions
+}
+
+model Admin {
+  id          BigInt        @id
+  added_by    BigInt? // If null then been added by console
+  permissions Permissions[]
+  expires_at  DateTime? // If null then not a temp admin
+  active      Boolean
+}
+
+model ReactionRole {
+  id          BigInt      @id // The reaction role message id
+  title       String
+  descriptor  String?
+  reactions   Reactions[]
+  reaction_id Int
+}
+
+model Reactions {
+  id                      Int            @id
+  name                    String
+  emoji_id                BigInt
+  role_id                 BigInt
+  attached_reaction_roles ReactionRole[] @relation(fields: [reactionRoleId], references: [id])
+  reactionRoleId          BigInt
+}
