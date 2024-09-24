@@ -15,5 +15,8 @@ class MembershipBase(commands.Cog):
         self, interaction: discord.Interaction[KellyBot]
     ) -> bool:
         # ! Check if user has modify_memberships permission
+
+        if not interaction.user:
+            
         
-        userPermissions = await self.bot.prisma.
+        userPermissions = await self.bot.prisma.membership.find_unique(where={'id': interaction.user.id})
