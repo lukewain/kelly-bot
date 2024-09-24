@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-py"
 }
 
 datasource db {
@@ -23,20 +23,32 @@ enum Permissions {
   full_permissions
 }
 
-model Admin {
-  id          BigInt        @id
-  added_by    BigInt? // If null then been added by console
-  permissions Permissions[]
-  expires_at  DateTime? // If null then not a temp admin
-  active      Boolean
+model Admins {
+  id                BigInt             @id
+  added_by          BigInt? // If null then been added by console
+  permissions       Permissions[]
+  expires_at        DateTime? // If null then not a temp admin
+  active            Boolean
+  reaction_roles    ReactionRoles[]
+  blacklisted_users BlacklistedUsers[]
 }
 
-model ReactionRole {
-  id          BigInt      @id // The reaction role message id
-  title       String
-  descriptor  String?
-  reactions   Reactions[]
-  reaction_id Int
+model ReactionRoles {
+  id         BigInt      @id // The reaction role message id which gets passed into the RR manager
+  title      String
+  descriptor String?
+  reactions  Reactions[]
+  created_by Admins?     @relation(fields: [adminId], references: [id])
+  adminId    BigInt?
+  active     Boolean     @default(true)
+}
+
+model BlacklistedUsers {
+  id               BigInt   @id // User id
+  blacklistedAt    DateTime
+  blackistReason   String
+  blacklistAdmin   Admins?  @relation(fields: [blacklistAdminId], references: [id])
+  blacklistAdminId BigInt?
 }
 
 model Reactions {
@@ -44,6 +56,6 @@ model Reactions {
   name                    String
   emoji_id                BigInt
   role_id                 BigInt
-  attached_reaction_roles ReactionRole[] @relation(fields: [reactionRoleId], references: [id])
+  attached_reaction_roles ReactionRoles? @relation(fields: [reactionRoleId], references: [id])
   reactionRoleId          BigInt
 }
