@@ -14,23 +14,48 @@ datasource db {
 }
 
 enum Permissions {
+  read_logs
+  mark_logs_read
   create_reaction_roles
   delete_reaction_roles
   modify_reaction_roles
   send_announcements
   create_administrators
   remove_administrators
+  modify_memberships
   full_permissions
 }
 
-model Admins {
+enum MembershipType {
+  ADMINISTRATOR
+  VIP
+  OWNER
+  MODERATOR
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  CRITICAL
+}
+
+model Membership {
   id                BigInt             @id
   added_by          BigInt? // If null then been added by console
-  permissions       Permissions[]
+  membership_level  MembershipType
+  permissions       PermissionLink     @relation(references: [membership], fields: [membership_level])
   expires_at        DateTime? // If null then not a temp admin
   active            Boolean
   reaction_roles    ReactionRoles[]
   blacklisted_users BlacklistedUsers[]
+}
+
+model PermissionLink {
+  membership  MembershipType @id
+  permissions Permissions[]
+  Membership  Membership[]
 }
 
 model ReactionRoles {
@@ -38,16 +63,16 @@ model ReactionRoles {
   title      String
   descriptor String?
   reactions  Reactions[]
-  created_by Admins?     @relation(fields: [adminId], references: [id])
+  created_by Membership? @relation(fields: [adminId], references: [id])
   adminId    BigInt?
   active     Boolean     @default(true)
 }
 
 model BlacklistedUsers {
-  id               BigInt   @id // User id
+  id               BigInt      @id // User id
   blacklistedAt    DateTime
   blackistReason   String
-  blacklistAdmin   Admins?  @relation(fields: [blacklistAdminId], references: [id])
+  blacklistAdmin   Membership? @relation(fields: [blacklistAdminId], references: [id])
   blacklistAdminId BigInt?
 }
 
@@ -58,4 +83,12 @@ model Reactions {
   role_id                 BigInt
   attached_reaction_roles ReactionRoles? @relation(fields: [reactionRoleId], references: [id])
   reactionRoleId          BigInt
+}
+
+model Logging {
+  id      Int      @id @default(autoincrement())
+  level   LogLevel
+  time    DateTime
+  content String
+  read    Boolean  @default(false)
 }
